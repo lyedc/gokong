@@ -67,6 +67,25 @@ func (pluginClient *PluginClient) List() (*Plugins, error) {
 	return pluginClient.ListFiltered(nil)
 }
 
+//ListEnabled retrieves a list of enabled plugin names.
+//Invited URL: /plugins/enabled
+func (pluginClient *PluginClient) ListEnabled() ([]string, error) {
+	_, body, errs := gorequest.New().Get(pluginClient.config.HostAddress + PluginsPath + "enabled").End()
+	if errs != nil {
+		return nil, fmt.Errorf("could not get plugins, error: %v", errs)
+	}
+
+	type enabledPlugins struct {
+		Plugins []string `json:"enabled_plugins"`
+	}
+	rsp := enabledPlugins{}
+	err := json.Unmarshal([]byte(body), &rsp)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse enabled plugins list response, error: %v", err)
+	}
+	return rsp.Plugins, nil
+}
+
 func (pluginClient *PluginClient) ListFiltered(filter *PluginFilter) (*Plugins, error) {
 
 	address, err := addQueryString(pluginClient.config.HostAddress+PluginsPath, filter)
