@@ -41,6 +41,28 @@ type PluginFilter struct {
 	Offset     int    `url:"offset,omitempty"`
 }
 
+type PluginSchema struct {
+	Fields       map[string]PluginSchemaField `json:"fields,omitempty"`
+	ErrorMessage string                       `json:"message,omitempty"`
+}
+
+type PluginSchemaField struct {
+	//Validates the type of a property.
+	Type string `json:"type"`
+	//Default: false. If true, the property must be present in the configuration.
+	IsRequired bool `json:"required,omitempty"`
+	//Default: false. If true, the value must be unique (see remark below).
+	IsUnique bool `json:"unique,omitempty"`
+	//If the property is not specified in the configuration, will set the property to the given value.
+	DefaultValue interface{} `json:"default,omitempty"`
+	//A function to perform any custom validation on a property. See later examples for its parameters and return values.
+	Func string `json:"func,omitempty"`
+}
+
+func (psf *PluginSchemaField) HasDefaultValue() bool {
+	return psf.DefaultValue != nil
+}
+
 const PluginsPath = "/plugins/"
 
 func (pluginClient *PluginClient) GetById(id string) (*Plugin, error) {
@@ -156,4 +178,20 @@ func (pluginClient *PluginClient) DeleteById(id string) error {
 	}
 
 	return nil
+}
+
+func (pluginClient *PluginClient) GetSchema(pluginName string) (*PluginSchema, error) {
+	rsp, body, errs := gorequest.New().Get(fmt.Sprintf("%s/plugins/schema/%s", pluginClient.config.HostAddress, pluginName)).End()
+	if errs != nil {
+		return nil, fmt.Errorf("could not get plugins, error: %v", errs)
+	}
+	ps := &PluginSchema{}
+	err := json.Unmarshal([]byte(body), ps)
+	if err != nil {
+		return nil, err
+	}
+	if rsp.StatusCode != 200 {
+		return nil, fmt.Errorf("Error occured during retrieving a plugin's schema data: %s", ps.ErrorMessage)
+	}
+	return ps, nil
 }
