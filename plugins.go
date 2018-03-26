@@ -131,8 +131,14 @@ func (pluginClient *PluginClient) ListFiltered(filter *PluginFilter) (*Plugins, 
 }
 
 func (pluginClient *PluginClient) Create(pluginRequest *PluginRequest) (*Plugin, error) {
-
-	_, body, errs := gorequest.New().Post(pluginClient.config.HostAddress + PluginsPath).Send(pluginRequest).End()
+	//BUG fixes: According to the given API ID to compose the final HTTP request address.
+	httpPath := ""
+	if pluginRequest.ApiId == "" {
+		httpPath = pluginClient.config.HostAddress + PluginsPath
+	} else {
+		httpPath = fmt.Sprintf("%s/apis/%s%s", pluginClient.config.HostAddress, pluginRequest.ApiId, PluginsPath)
+	}
+	_, body, errs := gorequest.New().Post(httpPath).Send(pluginRequest).End()
 	if errs != nil {
 		return nil, fmt.Errorf("could not create new plugin, error: %v", errs)
 	}
