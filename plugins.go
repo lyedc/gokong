@@ -138,7 +138,7 @@ func (pluginClient *PluginClient) Create(pluginRequest *PluginRequest) (*Plugin,
 	} else {
 		httpPath = fmt.Sprintf("%s/apis/%s%s", pluginClient.config.HostAddress, pluginRequest.ApiId, PluginsPath)
 	}
-	_, body, errs := gorequest.New().Post(httpPath).Send(pluginRequest).End()
+	_, body, errs := gorequest.New().Put(httpPath).Send(pluginRequest).End()
 	if errs != nil {
 		return nil, fmt.Errorf("could not create new plugin, error: %v", errs)
 	}
